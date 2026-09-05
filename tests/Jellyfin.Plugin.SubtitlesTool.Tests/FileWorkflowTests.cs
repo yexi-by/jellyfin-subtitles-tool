@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Jellyfin.Plugin.SubtitlesTool.Core;
 
 namespace Jellyfin.Plugin.SubtitlesTool.Tests;
@@ -113,6 +114,22 @@ public sealed class FileWorkflowTests : IDisposable
         Assert.Equal("srt", source.Resolve(candidate.Id, Video()).Format);
         Assert.Throws<ToolException>(() => source.Resolve(candidate.Id, Video("other.mp4")));
         Assert.Throws<ToolException>(() => source.Resolve("expired", Video()));
+    }
+
+    [Theory]
+    [InlineData("movie.en-zh-CN.srt", true)]
+    [InlineData("movie.chs3.ass", true)]
+    [InlineData("movie[中文简体].srt", true)]
+    [InlineData("movie.cht.srt", true)]
+    [InlineData("电影.en.srt", false)]
+    [InlineData("Chinatown.srt", false)]
+    public async Task MissingLanguageUsesOnlyExplicitFilenameMarkers(string name, bool chinese)
+    {
+        var payload = JsonSerializer.Serialize(new { code = 0, result = "ok", data = new[] { new { name, url = "https://example.com/sub.srt", ext = "srt", languages = Array.Empty<string>() } } });
+        using var source = new ThunderSource(new HttpClient(new Handler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(payload) })));
+        var candidate = Assert.Single(await source.SearchAsync(Video(), new string('A', 40), default));
+        Assert.Equal(chinese, candidate.Chinese);
+        Assert.Equal(chinese ? ["中文（文件名）"] : Array.Empty<string>(), candidate.Languages);
     }
 
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler

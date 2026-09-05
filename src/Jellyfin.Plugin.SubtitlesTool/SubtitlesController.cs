@@ -77,7 +77,7 @@ public sealed class SubtitlesController(ILibraryManager library, IMediaSourceMan
             {
                 await target.Item.RefreshMetadata(new MetadataRefreshOptions(new DirectoryService(fileSystem))
                 {
-                    MetadataRefreshMode = MetadataRefreshMode.None,
+                    MetadataRefreshMode = MetadataRefreshMode.ValidationOnly,
                     ImageRefreshMode = MetadataRefreshMode.None,
                     ForceSave = true,
                     RegenerateTrickplay = false

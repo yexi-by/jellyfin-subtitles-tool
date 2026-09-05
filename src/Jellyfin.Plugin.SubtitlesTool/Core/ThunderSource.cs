@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Jellyfin.Plugin.SubtitlesTool.Core;
@@ -11,6 +12,7 @@ public sealed class ThunderSource(HttpClient httpClient) : IDisposable
 {
     private readonly MemoryCache _candidates = new(new MemoryCacheOptions { SizeLimit = 4096 });
     public static readonly string[] Formats = ["srt", "ass", "ssa", "vtt"];
+    private static readonly Regex ChineseName = new(@"(?:^|[^A-Za-z0-9])(?:zh(?:[-_](?:cn|tw|hk|hans|hant))?|chi|zho|chs|cht)(?=$|[^A-Za-z])|中文|简[体體]|繁[体體]|中英|英中|中日|日中|中韩|韩中", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     public static bool IsChinese(IEnumerable<string> languages) => languages.Any(language =>
     {
@@ -39,7 +41,10 @@ public sealed class ThunderSource(HttpClient httpClient) : IDisposable
                     var id = Guid.NewGuid().ToString("N");
                     var format = item.Ext.TrimStart('.').ToLowerInvariant();
                     _candidates.Set(id, new CandidateDownload(mediaPath, new Uri(item.Url), format), new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15), Size = 1 });
-                    return new Candidate(id, item.Name, format, item.Languages, item.Score, IsChinese(item.Languages));
+                    // 源站经常缺少语言信息；只识别文件名中的明确语言标记，不依据片名含汉字推断。
+                    var languages = !IsChinese(item.Languages) && ChineseName.IsMatch(item.Name)
+                        ? [.. item.Languages, "中文（文件名）"] : item.Languages;
+                    return new Candidate(id, item.Name, format, languages, item.Score, IsChinese(languages));
                 }).ToArray();
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new ToolException("连接字幕源超时，请重试。", 504); }
