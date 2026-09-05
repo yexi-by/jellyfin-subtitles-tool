@@ -27,7 +27,7 @@ public sealed class Registrator : IPluginServiceRegistrator
         services.AddSingleton(_ =>
         {
             var http = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("Jellyfin-Subtitles-Tool/0.1.0.0");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("Jellyfin-Subtitles-Tool/" + typeof(Plugin).Assembly.GetName().Version);
             return new ThunderSource(http);
         });
         services.AddTransient<IStartupFilter, WebIntegration>();

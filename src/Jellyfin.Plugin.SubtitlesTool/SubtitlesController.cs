@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Text.Json;
 using Jellyfin.Plugin.SubtitlesTool.Core;
 using MediaBrowser.Common.Api;
@@ -6,6 +5,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
@@ -21,7 +21,7 @@ namespace Jellyfin.Plugin.SubtitlesTool;
 [ApiController]
 [Route("SubtitlesTool/Items/{itemId:guid}")]
 [Authorize(Policy = Policies.SubtitleManagement)]
-public sealed class SubtitlesController(ILibraryManager library, IMediaSourceManager sources, IFileSystem fileSystem, HashRecords hashes, ThunderSource thunder, ILogger<SubtitlesController> logger) : ControllerBase
+public sealed class SubtitlesController(ILibraryManager library, IMediaSourceManager sources, IFileSystem fileSystem, HashRecords hashes, ThunderSource thunder, ILogger<SubtitlesController> logger, IAuthorizationContext authorization) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     public sealed record SearchRequest(string? MediaSourceId);
@@ -29,11 +29,11 @@ public sealed class SubtitlesController(ILibraryManager library, IMediaSourceMan
     private sealed record Target(Video Item, string Path, string SourceId);
 
     [HttpGet]
-    public ActionResult Info(Guid itemId, [FromQuery] string? mediaSourceId)
+    public async Task<ActionResult> Info(Guid itemId, [FromQuery] string? mediaSourceId)
     {
         try
         {
-            var target = Resolve(itemId, mediaSourceId);
+            var target = await ResolveAsync(itemId, mediaSourceId);
             return Ok(new { fileName = Path.GetFileName(target.Path), mediaSourceId = target.SourceId, hasRecord = System.IO.File.Exists(HashRecords.RecordPath(target.Path)), subtitles = ExistingSubtitles(target.Path) });
         }
         catch (Exception ex) when (IsUserError(ex)) { return ErrorResult(ex); }
@@ -44,7 +44,7 @@ public sealed class SubtitlesController(ILibraryManager library, IMediaSourceMan
     {
         try
         {
-            var target = Resolve(itemId, body.MediaSourceId);
+            var target = await ResolveAsync(itemId, body.MediaSourceId);
             Response.ContentType = "application/x-ndjson; charset=utf-8";
             Response.Headers.CacheControl = "no-store";
             Response.Headers["X-Accel-Buffering"] = "no";
@@ -69,7 +69,7 @@ public sealed class SubtitlesController(ILibraryManager library, IMediaSourceMan
     {
         try
         {
-            var target = Resolve(itemId, body.MediaSourceId);
+            var target = await ResolveAsync(itemId, body.MediaSourceId);
             var candidate = thunder.Resolve(body.CandidateId, target.Path);
             var subtitlePath = await SidecarWriter.SaveAsync(target.Path, candidate.Format, body.Overwrite, (output, token) => thunder.DownloadAsync(candidate, output, token), cancellationToken);
             // 文件提交后即使客户端关闭，也完成 Jellyfin 的媒体刷新。
@@ -96,16 +96,18 @@ public sealed class SubtitlesController(ILibraryManager library, IMediaSourceMan
         catch (Exception ex) when (IsUserError(ex)) { return ErrorResult(ex); }
     }
 
-    private Target Resolve(Guid itemId, string? sourceId)
+    private async Task<Target> ResolveAsync(Guid itemId, string? sourceId)
     {
-        var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsed) ? parsed : Guid.Empty;
-        var video = library.GetItemById<Video>(itemId, userId);
+        var auth = await authorization.GetAuthorizationInfo(HttpContext);
+        if (!auth.IsAuthenticated || (!auth.IsApiKey && auth.User is null))
+            throw new ToolException("登录状态无效，请重新登录。", 401);
+        var video = library.GetItemById<Video>(itemId, auth.User);
         if (video is not Movie && video is not Episode) throw new ToolException("此条目不是可处理的本地电影或剧集。", 404);
         var list = sources.GetStaticMediaSources(video, false);
         var source = string.IsNullOrEmpty(sourceId) ? list.FirstOrDefault() : list.FirstOrDefault(item => item.Id == sourceId);
         if (source is null || string.IsNullOrWhiteSpace(source.Path) || !System.IO.File.Exists(source.Path) || source.Protocol != MediaProtocol.File || Path.GetExtension(source.Path).Equals(".strm", StringComparison.OrdinalIgnoreCase))
             throw new ToolException("此媒体源不是可读取的本地视频文件。", 404);
-        var item = Guid.TryParse(source.Id, out var sourceGuid) ? library.GetItemById<Video>(sourceGuid, userId) ?? video : video;
+        var item = Guid.TryParse(source.Id, out var sourceGuid) ? library.GetItemById<Video>(sourceGuid, auth.User) ?? video : video;
         return new Target(item, source.Path, source.Id);
     }
 
