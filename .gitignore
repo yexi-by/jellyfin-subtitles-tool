@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/node_modules/
+webui/dist/
+artifacts/
+**/TestResults/
+.env*
+*.user

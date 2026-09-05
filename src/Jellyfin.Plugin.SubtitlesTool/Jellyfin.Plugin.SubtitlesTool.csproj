@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>0.1.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.11" ExcludeAssets="runtime" />
+    <PackageReference Include="Jellyfin.Model" Version="10.11.11" ExcludeAssets="runtime" />
+    <EmbeddedResource Include="../../webui/dist/subtitles-tool.js" LogicalName="SubtitlesTool.Script" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,308 @@
+:host {
+    font-family: inherit;
+    color-scheme: dark;
+    --accent: #00a4dc;
+    --surface: #181b22;
+    --text: #f2f5f9;
+    --muted: #a9b3c3;
+    color: var(--text)
+}
+
+* {
+    box-sizing: border-box
+}
+
+dialog {
+    border: 1px solid #ffffff20;
+    border-radius: 20px;
+    padding: 0;
+    color: var(--text);
+    background: var(--surface);
+    width: min(920px, calc(100vw - 48px));
+    max-width: none;
+    height: min(780px, calc(100dvh - 64px));
+    max-height: none;
+    box-shadow: 0 24px 90px #0008;
+    overflow: hidden
+}
+
+dialog::backdrop {
+    background: #000a;
+    backdrop-filter: blur(4px)
+}
+
+.panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column
+}
+
+header {
+    padding: 24px 28px 16px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    border-bottom: 1px solid #ffffff14
+}
+
+header>div {
+    min-width: 0;
+    flex: 1
+}
+
+.eyebrow {
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 0 0 8px
+}
+
+h1 {
+    font-size: 20px;
+    line-height: 1.5;
+    margin: 0;
+    overflow-wrap: anywhere
+}
+
+p {
+    line-height: 1.6;
+    margin: 8px 0
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 14px
+}
+
+.close {
+    flex: none;
+    font-size: 24px;
+    padding: 0 !important;
+    width: 44px
+}
+
+button {
+    font: inherit;
+    min-height: 44px;
+    min-width: 44px;
+    cursor: pointer;
+    border: 1px solid #ffffff24;
+    border-radius: 10px;
+    padding: 9px 16px;
+    color: var(--text);
+    background: #ffffff09;
+    line-height: 1.4
+}
+
+button:hover {
+    background: #ffffff16
+}
+
+button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px
+}
+
+button:disabled {
+    opacity: .55;
+    cursor: wait
+}
+
+.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent
+}
+
+.primary:hover {
+    background: #008cc1
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 16px 28px;
+    flex-wrap: wrap
+}
+
+.toolbar .retry {
+    margin-left: auto
+}
+
+.filter[aria-pressed=true] {
+    background: #00a4dc25;
+    border-color: var(--accent);
+    color: #72d7fa
+}
+
+.status {
+    padding: 0 28px 14px;
+    flex: none
+}
+
+.status-text {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px
+}
+
+.status.error .status-text {
+    color: #ffb4ab
+}
+
+progress {
+    accent-color: var(--accent);
+    width: 100%;
+    height: 6px;
+    margin-top: 12px
+}
+
+.content {
+    padding: 0 28px 24px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    flex: 1;
+    min-height: 0;
+    scrollbar-gutter: stable
+}
+
+.card {
+    padding: 18px 0;
+    border-top: 1px solid #ffffff12;
+    display: flex;
+    gap: 20px;
+    align-items: center
+}
+
+.details {
+    flex: 1;
+    min-width: 0
+}
+
+.name {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    margin: 0 0 10px
+}
+
+.badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+    align-items: center
+}
+
+.badge {
+    background: #ffffff0b;
+    border-radius: 5px;
+    padding: 3px 7px
+}
+
+.card button {
+    flex-shrink: 0
+}
+
+.empty {
+    padding: 44px 12px;
+    text-align: center;
+    color: var(--muted)
+}
+
+.empty p {
+    margin-bottom: 20px
+}
+
+.confirm {
+    padding: 16px 28px 24px;
+    border-top: 1px solid #ffffff20;
+    background: #25252b
+}
+
+.confirm p {
+    overflow-wrap: anywhere
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end
+}
+
+.confirm[hidden],
+progress[hidden] {
+    display: none
+}
+
+.existing {
+    overflow-wrap: anywhere
+}
+
+.footnote {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 16px
+}
+
+@media(max-width:600px) {
+    dialog {
+        width: 100vw;
+        height: 100dvh;
+        margin: 0;
+        border: 0;
+        border-radius: 0
+    }
+
+    header {
+        padding: 20px 18px 14px;
+        padding-top: max(20px, env(safe-area-inset-top))
+    }
+
+    h1 {
+        font-size: 18px
+    }
+
+    .toolbar {
+        padding: 14px 18px
+    }
+
+    .status {
+        padding: 0 18px 12px
+    }
+
+    .content {
+        padding: 0 18px 20px
+    }
+
+    .card {
+        align-items: flex-start;
+        gap: 12px
+    }
+
+    .card button {
+        padding: 9px 12px
+    }
+
+    .name {
+        font-size: 15px
+    }
+
+    .confirm {
+        padding: 14px 18px max(20px, env(safe-area-inset-bottom))
+    }
+
+    .toolbar button {
+        font-size: 14px;
+        padding: 8px 12px
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    * {
+        scroll-behavior: auto !important
+    }
+}

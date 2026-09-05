@@ -1,0 +1,9 @@
+{
+  "name": "jellyfin-subtitles-tool-webui",
+  "private": true,
+  "version": "0.1.0.0",
+  "type": "module",
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {"check": "tsc --noEmit", "test": "vitest run", "build": "vite build"},
+  "devDependencies": {"typescript": "7.0.2", "vite": "8.2.2", "vitest": "5.0.0", "@types/node": "24.10.1"}
+}
