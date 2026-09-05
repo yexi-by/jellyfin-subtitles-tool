@@ -132,6 +132,22 @@ public sealed class FileWorkflowTests : IDisposable
         Assert.Equal(chinese ? ["中文（文件名）"] : Array.Empty<string>(), candidate.Languages);
     }
 
+    [Fact]
+    public async Task SourceDistinguishesNoResultsFromNetworkFailure()
+    {
+        using var empty = new ThunderSource(new HttpClient(new Handler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"code\":0,\"result\":\"ok\",\"data\":[]}")
+        })));
+        Assert.Empty(await empty.SearchAsync(Video(), new string('A', 40), default));
+        using var unavailable = new ThunderSource(new HttpClient(new Handler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable))));
+        var sourceError = await Assert.ThrowsAsync<ToolException>(() => unavailable.SearchAsync(Video(), new string('A', 40), default));
+        Assert.Equal(502, sourceError.Status);
+        using var disconnected = new ThunderSource(new HttpClient(new Handler(_ => throw new HttpRequestException())));
+        var connectionError = await Assert.ThrowsAsync<ToolException>(() => disconnected.SearchAsync(Video(), new string('A', 40), default));
+        Assert.Contains("无法连接字幕源", connectionError.Message);
+    }
+
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> send) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(send(request));
