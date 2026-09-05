@@ -42,8 +42,8 @@ public sealed class ThunderSource(HttpClient httpClient) : IDisposable
                     var format = item.Ext.TrimStart('.').ToLowerInvariant();
                     _candidates.Set(id, new CandidateDownload(mediaPath, new Uri(item.Url), format), new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15), Size = 1 });
                     // 源站经常缺少语言信息；只识别文件名中的明确语言标记，不依据片名含汉字推断。
-                    var languages = !IsChinese(item.Languages) && ChineseName.IsMatch(item.Name)
-                        ? [.. item.Languages, "中文（文件名）"] : item.Languages;
+                    var languages = item.Languages.Where(language => !string.IsNullOrWhiteSpace(language)).Select(language => language.Trim()).ToArray();
+                    if (!IsChinese(languages) && ChineseName.IsMatch(item.Name)) languages = [.. languages, "中文（文件名）"];
                     return new Candidate(id, item.Name, format, languages, item.Score, IsChinese(languages));
                 }).ToArray();
         }

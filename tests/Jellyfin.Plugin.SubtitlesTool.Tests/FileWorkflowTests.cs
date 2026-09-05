@@ -125,7 +125,7 @@ public sealed class FileWorkflowTests : IDisposable
     [InlineData("Chinatown.srt", false)]
     public async Task MissingLanguageUsesOnlyExplicitFilenameMarkers(string name, bool chinese)
     {
-        var payload = JsonSerializer.Serialize(new { code = 0, result = "ok", data = new[] { new { name, url = "https://example.com/sub.srt", ext = "srt", languages = Array.Empty<string>() } } });
+        var payload = JsonSerializer.Serialize(new { code = 0, result = "ok", data = new[] { new { name, url = "https://example.com/sub.srt", ext = "srt", languages = new[] { "", " " } } } });
         using var source = new ThunderSource(new HttpClient(new Handler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(payload) })));
         var candidate = Assert.Single(await source.SearchAsync(Video(), new string('A', 40), default));
         Assert.Equal(chinese, candidate.Chinese);
