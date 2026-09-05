@@ -19,6 +19,27 @@ function itemId(): string | null {
 }
 function page(): HTMLElement | null { return [...document.querySelectorAll<HTMLElement>('.itemDetailPage')].find(element => !element.classList.contains('hide') && element.getClientRects().length > 0) ?? null; }
 function sourceId(): string | undefined { return page()?.querySelector<HTMLSelectElement>('.selectSource')?.value || undefined; }
+function refreshDetails(id: string, selectedSource: string | undefined, signal: AbortSignal): Promise<boolean> {
+  const currentPage = page();
+  const select = currentPage?.querySelector<HTMLSelectElement>('.selectSource');
+  if (!currentPage || !select || itemId() !== id || signal.aborted) return Promise.resolve(false);
+  return new Promise(resolve => {
+    const finish = (updated: boolean) => { observer.disconnect(); clearTimeout(timeout); signal.removeEventListener('abort', cancel); resolve(updated); };
+    const cancel = () => finish(false);
+    const observer = new MutationObserver(() => {
+      if (selectedSource && [...select.options].some(option => option.value === selectedSource)) {
+        select.value = selectedSource; select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      finish(true);
+    });
+    const timeout = setTimeout(() => finish(false), 10000);
+    signal.addEventListener('abort', cancel, { once: true });
+    observer.observe(select, { childList: true });
+    // Jellyfin 10.11 的恢复页面会复用旧音轨索引；走页面已有的清理和加载事件以读取最新媒体源。
+    currentPage.dispatchEvent(new CustomEvent('viewbeforehide'));
+    currentPage.dispatchEvent(new CustomEvent('viewshow', { bubbles: true, detail: { isRestored: false } }));
+  });
+}
 async function request(path: string, signal: AbortSignal, body?: unknown): Promise<Response> {
   const client = window.ApiClient;
   if (!client) throw new Error('Jellyfin 尚未完成加载，请稍后重试。');
@@ -54,7 +75,7 @@ class Panel {
   private readonly root: string;
   private readonly selectedSource = sourceId();
 
-  constructor(id: string, private readonly onClose: () => void) {
+  constructor(private readonly id: string, private readonly onClose: () => void) {
     this.root = `SubtitlesTool/Items/${id}`;
     const style = node('style'); style.textContent = css; this.shadow.append(style, this.dialog);
     this.dialog.setAttribute('aria-labelledby', 'st-title'); this.title.id = 'st-title';
@@ -142,7 +163,9 @@ class Panel {
     this.downloading = true; this.retry.disabled = true; this.render(); this.setStatus('正在下载并保存字幕…');
     try {
       const result = await (await request(this.root + '/download', this.abort.signal, { mediaSourceId: this.selectedSource, candidateId: candidate.id, overwrite })).json() as { message: string; refreshed: boolean };
-      await this.loadInfo(); this.setStatus(result.message, !result.refreshed);
+      await this.loadInfo();
+      const viewUpdated = !result.refreshed || await refreshDetails(this.id, this.selectedSource, this.abort.signal);
+      this.setStatus(viewUpdated ? result.message : '字幕已保存，请刷新页面更新音轨和字幕选项。', !result.refreshed || !viewUpdated);
     } catch (error) {
       if (error instanceof RequestError && error.status === 409) this.askReplace(candidate, error.message);
       else this.showError(error);
