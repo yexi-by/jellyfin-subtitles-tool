@@ -1,20 +1,20 @@
 [
   {
-    "description": "在视频旁保存 CID、GCID，手动选择并下载外挂字幕。",
     "owner": "yexi-by",
-    "guid": "c4b75732-8527-4f58-9cdf-18efca21a9e5",
-    "category": "Metadata",
     "overview": "详情页字幕面板，支持中文筛选与同名外挂字幕保存，视频文件保持不变。",
-    "name": "Subtitles Tool",
+    "guid": "c4b75732-8527-4f58-9cdf-18efca21a9e5",
     "versions": [
       {
-        "sourceUrl": "https://github.com/yexi-by/jellyfin-subtitles-tool/releases/download/v0.1.0.4/Jellyfin.Plugin.SubtitlesTool_0.1.0.4.zip",
-        "timestamp": "2026-09-05T13:33:36Z",
+        "version": "0.1.0.5",
+        "changelog": "提供 CID、GCID 记录、手动字幕搜索与外挂保存。",
+        "checksum": "0AE18DB3280470D321463E4C855107DB",
+        "sourceUrl": "https://github.com/yexi-by/jellyfin-subtitles-tool/releases/download/v0.1.0.5/Jellyfin.Plugin.SubtitlesTool_0.1.0.5.zip",
         "targetAbi": "10.11.11.0",
-        "version": "0.1.0.4",
-        "checksum": "A93DDCE5484332DC52057C19611C3EA2",
-        "changelog": "提供 CID、GCID 记录、手动字幕搜索与外挂保存。"
+        "timestamp": "2026-09-05T13:43:08Z"
       }
-    ]
+    ],
+    "description": "在视频旁保存 CID、GCID，手动选择并下载外挂字幕。",
+    "name": "Subtitles Tool",
+    "category": "Metadata"
   }
 ]
