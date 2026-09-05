@@ -58,7 +58,7 @@ public sealed class SubtitlesController(ILibraryManager library, IMediaSourceMan
         {
             if (!cancellationToken.IsCancellationRequested)
             {
-                Response.ContentType = "application/x-ndjson; charset=utf-8";
+                if (!Response.HasStarted) Response.ContentType = "application/x-ndjson; charset=utf-8";
                 await Emit(new { type = "error", message = Describe(ex) }, cancellationToken);
             }
         }
